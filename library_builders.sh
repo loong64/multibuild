@@ -51,6 +51,11 @@ OPENSSL_DOWNLOAD_URL=${OPENSSL_DOWNLOAD_URL:-https://www.openssl.org/source}
 
 ARCHIVE_SDIR=${ARCHIVE_DIR:-archives}
 
+function update_config_files {
+    set -ex
+    find . -name "config.guess" -exec curl -L -o {} "https://github.com/cgitmirror/config/raw/refs/heads/master/config.guess" \; 2>/dev/null || true
+    find . -name "config.sub" -exec curl -L -o {} "https://github.com/cgitmirror/config/raw/refs/heads/master/config.sub" \; 2>/dev/null || true
+}
 
 function build_simple {
     # Example: build_simple libpng $LIBPNG_VERSION \
@@ -68,6 +73,7 @@ function build_simple {
     local archive=${name_version}.${ext}
     fetch_unpack $url/$archive
     (cd $name_version \
+        && update_config_files \
         && ./configure --prefix=$BUILD_PREFIX $HOST_CONFIGURE_FLAGS $configure_args \
         && make -j4 \
         && make install)
@@ -85,6 +91,7 @@ function build_github {
     fi
     local out_dir=$(fetch_unpack "https://github.com/${path}/archive/${tag_name}.tar.gz")
     (cd $out_dir \
+        && update_config_files \
         && ./configure --prefix=$BUILD_PREFIX $HOST_CONFIGURE_FLAGS $configure_args \
         && make -j4 \
         && make install)
